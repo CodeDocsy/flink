@@ -6,3 +6,5 @@ resources/
 # Editor
 .vscode/
 .DS_Store
+/static/codebase/.idea
+/static/codebase/target
