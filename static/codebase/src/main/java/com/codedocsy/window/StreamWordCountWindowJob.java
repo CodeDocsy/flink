@@ -76,7 +76,6 @@ public class StreamWordCountWindowJob {
 
                 )
                 .window(TumblingProcessingTimeWindows.of(Duration.of(10, ChronoUnit.SECONDS)))
-
                 .reduce(new ReduceFunction<CountItem>() {
                     @Override
                     public CountItem reduce(CountItem a, CountItem b) {

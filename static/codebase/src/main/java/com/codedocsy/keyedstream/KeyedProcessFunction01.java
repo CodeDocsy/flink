@@ -3,21 +3,15 @@ package com.codedocsy.keyedstream;
 
 import com.codedocsy.common.CountItem;
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.streaming.api.functions.sink.legacy.SinkFunction;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.util.Collector;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 
-
-public class KeyedStream02 {
-
-
+public class KeyedProcessFunction01 {
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         DataStreamSource<String> socketTextStream = env.socketTextStream("localhost", 9999);
@@ -35,24 +29,22 @@ public class KeyedStream02 {
                 })
                 .keyBy(new KeySelector<CountItem, String>() {
                            @Override
-                           public String getKey(CountItem input) throws Exception {
-                               System.out.println("keyBy-key: " + input.getKey() + ", 执行线程ID: " + Thread.currentThread().getId());
+                           public String getKey(CountItem input) {
                                return input.getKey();
                            }
                        }
                 )
-                .window(TumblingProcessingTimeWindows.of(Duration.of(10, ChronoUnit.SECONDS)))
-                .reduce(new ReduceFunction<CountItem>() {
+                .process(new KeyedProcessFunction<String, CountItem, CountItem>() {
                     @Override
-                    public CountItem reduce(CountItem a, CountItem b) {
-                        System.out.println("reduce-key: " + a.getKey() + ", 执行线程ID: " + Thread.currentThread().getId());
-                        return new CountItem(a.getKey(), a.getCount() + b.getCount());
+                    public void processElement(CountItem value, KeyedProcessFunction<String, CountItem, CountItem>.Context ctx, Collector<CountItem> out) {
+                        System.out.println("process Element value: " + value);
+                        out.collect(value);
                     }
                 })
                 .addSink(new SinkFunction<CountItem>() {
                     @Override
                     public void invoke(CountItem value, Context context) {
-                        System.out.println("sink-key: " + value.getKey() + ", 执行线程ID: " + Thread.currentThread().getId());
+                        System.out.println("SinkFunction : " + value);
                     }
                 });
         env.execute();
